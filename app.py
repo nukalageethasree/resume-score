@@ -170,9 +170,15 @@ async def health():
     return {"status": "ok", "tasks": list(ALL_TASKS.keys())}
 
 
+from fastapi import Request
+
 @app.post("/reset")
-async def reset(request: dict):
-    task_id = request.get("task_id", "task_1")
+async def reset(request: Request):
+    try:
+        body = await request.json()
+    except Exception:
+        body = {}
+    task_id = body.get("task_id", "task_1")
     if task_id not in ALL_TASKS:
         task_id = "task_1"
     env = ResumeScorerEnv()
@@ -181,9 +187,13 @@ async def reset(request: dict):
 
 
 @app.post("/step")
-async def step(request: dict):
+async def step(request: Request):
+    try:
+        body = await request.json()
+    except Exception:
+        body = {}
     env = ResumeScorerEnv()
-    action = Action(**request.get("action", {}))
+    action = Action(**body.get("action", {"action_type": "finalize", "score": 0.5}))
     obs, reward, done, info = env.step(action)
     return {
         "observation": obs.model_dump(),
