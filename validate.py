@@ -47,7 +47,7 @@ def check(name: str, fn):
 # ---------------------------------------------------------------------------
 
 def test_yaml():
-    with open("openenv.yaml") as f:
+    with open(os.path.join(os.path.dirname(__file__), "openenv.yaml")) as f:
         cfg = yaml.safe_load(f)
     required = ["name", "version", "description", "observation_space",
                 "action_space", "reward_space", "tasks"]
