@@ -1,0 +1,91 @@
+name: resume-scorer-env
+version: 1.0.0
+description: >
+  An OpenEnv-compliant reinforcement-learning environment that simulates the
+  real-world HR task of scoring a candidate resume against a job description.
+  An agent must analyse the resume, estimate a numeric match score (0–1),
+  and provide actionable improvement feedback. Three tasks of increasing
+  difficulty test score accuracy, feedback quality, and analytical depth.
+
+tags:
+  - openenv
+  - hr
+  - nlp
+  - resume
+  - scoring
+  - rl-environment
+
+author: OpenEnv Resume Scorer Team
+license: MIT
+
+environment:
+  class: ResumeScorerEnv
+  module: environment.env
+
+observation_space:
+  type: object
+  schema: environment.models.Observation
+  description: >
+    Structured observation containing the job description, extracted resume
+    text, detected sections, skill-match analysis, years of experience,
+    internship count, education level, and the agent's current submitted score
+    and feedback.
+
+action_space:
+  type: object
+  schema: environment.models.Action
+  description: >
+    Discrete action with four types:
+      submit_score    – submit a numeric score in [0, 1]
+      submit_feedback – submit improvement suggestions as text
+      request_section – request focused detail on a resume section
+      finalize        – end the episode
+
+reward_space:
+  type: object
+  schema: environment.models.Reward
+  range: [-0.10, +0.50]
+  description: >
+    Step reward composed of score-accuracy reward, feedback-quality reward,
+    efficiency penalty (for excessive steps), and invalid-action penalty.
+
+tasks:
+  - id: task_1
+    difficulty: easy
+    description: Score a junior full-stack developer resume against a broad JD.
+    expected_score: 0.65
+    grader: environment.graders.grade_task_1
+    success_threshold: 0.70
+    max_steps: 10
+
+  - id: task_2
+    difficulty: medium
+    description: Score an ML-engineer resume against a specialised JD; provide ≥2 feedback points.
+    expected_score: 0.72
+    grader: environment.graders.grade_task_2
+    success_threshold: 0.60
+    max_steps: 10
+
+  - id: task_3
+    difficulty: hard
+    description: Score a senior-manager vs VP Engineering JD; provide ≥4 detailed feedback items.
+    expected_score: 0.55
+    grader: environment.graders.grade_task_3
+    success_threshold: 0.55
+    max_steps: 15
+
+baseline:
+  model: gpt-4o-mini
+  script: baseline/inference.py
+  scores:
+    task_1: 0.76
+    task_2: 0.63
+    task_3: 0.51
+    average: 0.63
+
+huggingface:
+  space: resume-scorer-env
+  sdk: gradio
+  tags:
+    - openenv
+    - resume-scorer
