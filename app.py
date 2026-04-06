@@ -170,6 +170,29 @@ async def health():
     return {"status": "ok", "tasks": list(ALL_TASKS.keys())}
 
 
+@app.post("/reset")
+async def reset(request: dict):
+    task_id = request.get("task_id", "task_1")
+    if task_id not in ALL_TASKS:
+        task_id = "task_1"
+    env = ResumeScorerEnv()
+    obs = env.reset(task_id=task_id)
+    return obs.model_dump()
+
+
+@app.post("/step")
+async def step(request: dict):
+    env = ResumeScorerEnv()
+    action = Action(**request.get("action", {}))
+    obs, reward, done, info = env.step(action)
+    return {
+        "observation": obs.model_dump(),
+        "reward": reward.model_dump(),
+        "done": done,
+        "info": info,
+    }
+
+
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 7860))
     uvicorn.run(app, host="0.0.0.0", port=port)
