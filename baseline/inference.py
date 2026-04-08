@@ -28,7 +28,7 @@ except ImportError:
     sys.exit(1)
 
 # Adjust path if running as a script
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from environment import ResumeScorerEnv, Action
 from environment.graders import grade
