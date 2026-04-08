@@ -211,7 +211,8 @@ def main():
     parser.add_argument("--task", default="all", choices=["all", "task_1", "task_2", "task_3"])
     parser.add_argument("--quiet", action="store_true")
     args = parser.parse_args()
-    api_key = os.environ.get("OPENAI_API_KEY")
+    api_key = os.environ.get("API_KEY") or os.environ.get("OPENAI_API_KEY")
+    api_base_url = os.environ.get("API_BASE_URL")
     tasks = ["task_1", "task_2", "task_3"] if args.task == "all" else [args.task]
     results = []
     for tid in tasks:
@@ -227,7 +228,10 @@ def main():
                 passed = result["passed"]
                 components = result["components"]
             else:
-                client = OpenAI(api_key=api_key)
+                client = OpenAI(
+                api_key=api_key,
+                base_url=api_base_url if api_base_url else None,
+                )
                 r = run_agent(client, args.model, tid, verbose=not args.quiet)
                 submitted_score = r["submitted_score"]
                 steps = r["steps"]
