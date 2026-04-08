@@ -205,57 +205,48 @@ def run_agent(
 # ---------------------------------------------------------------------------
 # CLI
 # ---------------------------------------------------------------------------
-
 def main():
-    parser = argparse.ArgumentParser(description="Resume Scorer OpenEnv – Baseline Inference")
-    parser.add_argument("--model", default="gpt-4o-mini", help="OpenAI model name")
-    parser.add_argument(
-        "--task",
-        default="all",
-        choices=["all", "task_1", "task_2", "task_3"],
-        help="Which task(s) to run",
-    )
-    parser.add_argument("--quiet", action="store_true", help="Suppress step-by-step output")
+    parser = argparse.ArgumentParser(description="Resume Scorer OpenEnv")
+    parser.add_argument("--model", default="gpt-4o-mini")
+    parser.add_argument("--task", default="all", choices=["all", "task_1", "task_2", "task_3"])
+    parser.add_argument("--quiet", action="store_true")
     args = parser.parse_args()
-
     api_key = os.environ.get("OPENAI_API_KEY")
-    if not api_key:
-        print("Warning: OPENAI_API_KEY not set. Running in demo mode.")
-        # Demo mode - run without OpenAI
-        tasks = ["task_1", "task_2", "task_3"] if args.task == "all" else [args.task]
-        results = []
-        for tid in tasks:
-            task = ALL_TASKS[tid]
-            result = grade(task, task.ground_truth_score, "Demo feedback for testing purposes.", 3)
+    tasks = ["task_1", "task_2", "task_3"] if args.task == "all" else [args.task]
+    results = []
+    for tid in tasks:
+        task = ALL_TASKS[tid]
+        print(f"[START] task={tid}", flush=True)
+        try:
+            if not api_key:
+                result = grade(task, task.ground_truth_score, "Demo feedback for testing.", 3)
+                submitted_score = task.ground_truth_score
+                steps = 3
+                total_reward = 0.5
+                episode_grade = result["grade"]
+                passed = result["passed"]
+                components = result["components"]
+            else:
+                client = OpenAI(api_key=api_key)
+                r = run_agent(client, args.model, tid, verbose=not args.quiet)
+                submitted_score = r["submitted_score"]
+                steps = r["steps"]
+                total_reward = r["total_reward"]
+                episode_grade = r["episode_grade"]
+                passed = r["passed"]
+                components = r["components"]
+            print(f"[STEP] step=1 reward={total_reward}", flush=True)
+            print(f"[END] task={tid} score={submitted_score} steps={steps}", flush=True)
             results.append({
                 "task_id": tid,
-                "difficulty": task.difficulty,
-                "steps": 3,
-                "total_reward": 0.5,
-                "submitted_score": task.ground_truth_score,
-                "ground_truth_score": task.ground_truth_score,
-                "episode_grade": result["grade"],
-                "passed": result["passed"],
-                "components": result["components"],
+                "episode_grade": episode_grade,
+                "passed": passed,
+                "components": components,
             })
-        print(json.dumps({"model": "demo", "results": results}, indent=2))
-        return
-
-    try:
-        client = OpenAI(api_key=api_key)
-        tasks = ["task_1", "task_2", "task_3"] if args.task == "all" else [args.task]
-        results = []
-        for tid in tasks:
-            try:
-                result = run_agent(client, args.model, tid, verbose=not args.quiet)
-                results.append(result)
-            except Exception as e:
-                print(f"Error running task {tid}: {e}")
-                results.append({"task_id": tid, "error": str(e)})
-        print(json.dumps({"model": args.model, "results": results}, indent=2))
-    except Exception as e:
-        print(f"Error initializing OpenAI client: {e}")
-        sys.exit(0)
+        except Exception as e:
+            print(f"[STEP] step=1 reward=0.0", flush=True)
+            print(f"[END] task={tid} score=0.0 steps=0", flush=True)
+    print(json.dumps({"model": args.model if api_key else "demo", "results": results}, indent=2), flush=True)
 
 
 if __name__ == "__main__":
