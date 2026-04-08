@@ -93,7 +93,7 @@ def grade_task_1(
     # Efficiency bonus: full bonus if completed in ≤3 steps, decay after that
     efficiency = max(0.0, 1.0 - max(0, steps_used - 3) * 0.2)
 
-    total = round(accuracy * 0.90 + efficiency * 0.10, 4)
+    total = round(min(max(accuracy * 0.90 + efficiency * 0.10, 0.01), 0.99), 4)
 
     return {
         "grade": total,
@@ -128,7 +128,7 @@ def grade_task_2(
     topics = ["a/b test", "pytorch", "sagemaker", "cloud", "latency", "quantif"]
     fq, fq_exp = _feedback_quality(submitted_feedback, topics, min_items=2)
 
-    total = round(accuracy * 0.60 + fq * 0.40, 4)
+    total = round(min(max(accuracy * 0.60 + fq * 0.40, 0.01), 0.99), 4)
 
     return {
         "grade": total,
@@ -175,7 +175,7 @@ def grade_task_3(
 
     depth_penalty = 0.0 if item_count >= 4 else (4 - item_count) * 0.05
 
-    total = round(max(0.0, accuracy * 0.50 + fq * 0.50 - depth_penalty), 4)
+    total = round(min(max(accuracy * 0.50 + fq * 0.50 - depth_penalty, 0.01), 0.99), 4)
 
     return {
         "grade": total,
@@ -214,3 +214,4 @@ def grade(
     if grader is None:
         raise ValueError(f"Unknown task_id: {task.task_id}")
     return grader(task, submitted_score, submitted_feedback, steps_used)
+
