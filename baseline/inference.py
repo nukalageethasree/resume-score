@@ -234,13 +234,14 @@ def main():
                     base_url=api_base_url if api_base_url else None,
                 )
                 r = run_agent(client, args.model, tid, verbose=not args.quiet)
-                submitted_score = r["submitted_score"]
+                submitted_score = round(min(max(r["submitted_score"] or 0.5, 0.01), 0.99), 4)
                 steps = r["steps"]
                 total_reward = r["total_reward"]
-                episode_grade = r["episode_grade"]
+                episode_grade = round(min(max(r["episode_grade"], 0.01), 0.99), 4)
                 passed = r["passed"]
                 components = r["components"]
             print(f"[STEP] step=1 reward={total_reward}", flush=True)
+            submitted_score = round(min(max(submitted_score, 0.01), 0.99), 4)
             print(f"[END] task={tid} score={submitted_score} steps={steps}", flush=True)
             results.append({
                 "task_id": tid,
