@@ -26,12 +26,12 @@ def _score_accuracy(
     Full credit within tolerance; linearly decays to 0 at ±0.40.
     """
     if submitted is None:
-        return 0.0, "No score submitted."
+        return 0.01, "No score submitted."
     delta = abs(submitted - ground_truth)
     if delta <= tolerance:
-        return 1.0, f"Score {submitted:.2f} is within ±{tolerance} of ground truth {ground_truth:.2f}."
+        return 0.99, f"Score {submitted:.2f} is within ±{tolerance} of ground truth {ground_truth:.2f}."
     elif delta >= 0.40:
-        return 0.0, f"Score {submitted:.2f} is far from ground truth {ground_truth:.2f} (Δ={delta:.2f})."
+        return 0.01, f"Score {submitted:.2f} is far from ground truth {ground_truth:.2f} (Δ={delta:.2f})."
     else:
         grade = 1.0 - (delta - tolerance) / (0.40 - tolerance)
         return round(grade, 4), (
@@ -61,7 +61,8 @@ def _feedback_quality(
     depth_bonus = min(words / 80.0, 1.0) * 0.2   # up to 0.2 bonus
 
     raw = coverage_ratio * 0.8 + depth_bonus
-    grade = min(round(raw, 4), 1.0)
+    grade = min(round(raw, 4), 0.99)
+    grade = max(grade, 0.01)
 
     explanation = (
         f"Feedback covered {len(covered)}/{len(expected_topics)} expected topics "
